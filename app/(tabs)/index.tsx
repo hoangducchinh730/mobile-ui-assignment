@@ -1,98 +1,131 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React from 'react';
+import { SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
-
-export default function HomeScreen() {
+const LoginForm = () => {
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <View style={styles.formContainer}>
+      <Text style={styles.headerText}>Login</Text>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      <Text style={styles.label}>Email/Username</Text>
+      <TextInput style={styles.input} placeholder="test@mail.com" />
+
+      <Text style={styles.label}>Password</Text>
+      <TextInput style={styles.input} placeholder="° ° ° °" secureTextEntry={true} />
+
+      <TouchableOpacity style={styles.forgotWrapper}>
+        <Text style={styles.forgotText}>Forgot password?</Text>
+      </TouchableOpacity>
+
+      <View style={styles.buttonWrapper}>
+        <TouchableOpacity style={styles.actionButton}>
+          <Text style={styles.actionButtonText}>Sign in</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+const RegisterForm = () => {
+  return (
+    <View style={styles.formContainer}>
+      <Text style={styles.headerText}>Register</Text>
+
+      <Text style={styles.label}>Name</Text>
+      <TextInput style={styles.input} placeholder="test" />
+
+      <Text style={styles.label}>Email</Text>
+      <TextInput style={styles.input} placeholder="test@mail.com" />
+
+      <Text style={styles.label}>Password</Text>
+      <TextInput style={styles.input} placeholder="° ° ° °" secureTextEntry={true} />
+
+      <Text style={styles.label}>Confirm Password</Text>
+      <TextInput style={styles.input} placeholder="° ° ° °" secureTextEntry={true} />
+
+      <View style={styles.buttonWrapper}>
+        <TouchableOpacity style={styles.actionButton}>
+          <Text style={styles.actionButtonText}>Create</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+export default function App() {
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView contentContainerStyle={styles.container}>
+        {/* <LoginForm /> */}
+        <RegisterForm />
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#f9f9f9',
+  },
+  container: {
+    flexGrow: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
+    padding: 20,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  formContainer: {
+    width: '100%',
+    maxWidth: 350,
+    borderWidth: 1.5,
+    borderColor: '#333',
+    padding: 25,
+    backgroundColor: '#fff',
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  headerText: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 30,
+    color: '#000',
   },
+  label: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: 5,
+    color: '#000',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#000',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 15,
+    marginBottom: 15,
+    color: '#000',
+  },
+  forgotWrapper: {
+    alignItems: 'flex-start',
+    marginTop: -5,
+    marginBottom: 20,
+  },
+  forgotText: {
+    fontSize: 12,
+    color: '#555',
+  },
+  buttonWrapper: {
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  actionButton: {
+    borderWidth: 1.5,
+    borderColor: '#0056b3',
+    paddingVertical: 10,
+    paddingHorizontal: 35,
+    backgroundColor: '#007BFF',
+  },
+  actionButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+  }
 });
