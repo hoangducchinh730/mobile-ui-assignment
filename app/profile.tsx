@@ -14,14 +14,12 @@ import {
 } from 'react-native';
 
 export default function ProfileScreen() {
-    // Khởi tạo State cho các trường thông tin
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [address, setAddress] = useState('');
     const [avatarUrl, setAvatarUrl] = useState('');
     const [description, setDescription] = useState('');
 
-    // Tự động chạy khi màn hình được load lên
     useEffect(() => {
         const loadUserData = async () => {
             try {
@@ -42,13 +40,13 @@ export default function ProfileScreen() {
         loadUserData();
     }, []);
 
-    // Hàm xử lý khi bấm nút "Save"
+
     const handleSave = async () => {
         try {
             const savedUserString = await AsyncStorage.getItem('USER_ACCOUNT');
             let userData = savedUserString ? JSON.parse(savedUserString) : {};
 
-            // Cập nhật dữ liệu mới vào Object (Giữ nguyên password cũ)
+
             userData = {
                 ...userData,
                 name,
@@ -57,7 +55,6 @@ export default function ProfileScreen() {
                 description
             };
 
-            // Lưu lại xuống AsyncStorage
             await AsyncStorage.setItem('USER_ACCOUNT', JSON.stringify(userData));
             Alert.alert('Thành công', 'Thông tin của bạn đã được cập nhật!');
         } catch (error) {
@@ -65,13 +62,13 @@ export default function ProfileScreen() {
         }
     };
 
-    // Hàm Đăng xuất
+
     const handleLogout = () => {
         Alert.alert("Đăng xuất", "Bạn có chắc chắn muốn đăng xuất?", [
             { text: "Hủy", style: "cancel" },
             {
                 text: "Đồng ý",
-                onPress: () => router.replace('/') // Đẩy về trang Login (index.tsx)
+                onPress: () => router.replace('/')
             }
         ]);
     };
@@ -88,7 +85,7 @@ export default function ProfileScreen() {
                         {avatarUrl ? (
                             <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
                         ) : (
-                            <Text style={styles.avatarPlaceholder}>🖼️</Text> // Icon mặc định nếu chưa có link ảnh
+                            <Text style={styles.avatarPlaceholder}>🖼️</Text>
                         )}
                     </View>
                 </View>
@@ -103,7 +100,7 @@ export default function ProfileScreen() {
 
                 <Text style={styles.label}>Email</Text>
                 <TextInput
-                    style={[styles.input, styles.inputDisabled]} // Email thường không cho sửa đổi nên bôi xám
+                    style={[styles.input, styles.inputDisabled]}
                     value={email}
                     editable={false}
                 />
@@ -152,7 +149,6 @@ export default function ProfileScreen() {
     );
 }
 
-// Khung CSS theo phong cách Minimalist giống bản thiết kế của bạn
 const styles = StyleSheet.create({
     safeArea: {
         flex: 1,
@@ -211,10 +207,10 @@ const styles = StyleSheet.create({
     },
     textArea: {
         height: 100,
-        textAlignVertical: 'top' // Quan trọng: Đẩy chữ lên đầu góc trái cho khung Description
+        textAlignVertical: 'top'
     },
     buttonWrapper: {
-        alignItems: 'flex-start', // Nút Save căn trái theo ảnh mẫu
+        alignItems: 'flex-start',
         marginTop: 10
     },
     btnSave: {

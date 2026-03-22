@@ -49,7 +49,6 @@ export default function HomeScreen() {
                 data={HARDCODED_POSTS}
                 keyExtractor={item => item.id}
                 contentContainerStyle={{ padding: 20 }}
-                // Tắt thanh cuộn ngang/dọc mặc định cho đẹp
                 showsVerticalScrollIndicator={false}
                 renderItem={({ item }) => (
                     <View style={styles.postCard}>
@@ -67,7 +66,7 @@ const styles = StyleSheet.create({
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'center', // Thêm căn giữa cho nút Profile cân đối
+        alignItems: 'center',
         padding: 20,
         borderBottomWidth: 1,
         borderColor: '#eee'
@@ -81,12 +80,12 @@ const styles = StyleSheet.create({
         padding: 15,
         marginBottom: 15,
         backgroundColor: '#fff',
-        borderRadius: 8, // Bo góc cho Card mềm mại hơn
-        shadowColor: '#000', // Thêm tí bóng đổ nhẹ cho nổi bật
+        borderRadius: 8,
+        shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.1,
         shadowRadius: 2,
-        elevation: 2, // Đổ bóng cho Android
+        elevation: 2,
     },
     postTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 4 }
 });

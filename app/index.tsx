@@ -13,7 +13,6 @@ export default function LoginScreen() {
       if (savedUserString) {
         const savedUser = JSON.parse(savedUserString);
         if (email === savedUser.email && password === savedUser.password) {
-          // Thành công -> Sang trang Home
           router.replace('/home');
         } else {
           Alert.alert('Lỗi', 'Email hoặc mật khẩu không đúng!');
@@ -56,7 +55,7 @@ export default function LoginScreen() {
   );
 }
 
-// Bê nguyên style của bạn vào đây
+
 export const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#f9f9f9', justifyContent: 'center', alignItems: 'center' },
   formContainer: { width: '90%', maxWidth: 350, borderWidth: 1.5, borderColor: '#333', padding: 25, backgroundColor: '#fff' },

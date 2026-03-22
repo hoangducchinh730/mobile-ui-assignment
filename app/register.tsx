@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, SafeAreaView, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { styles } from './index'; // Tái sử dụng style từ file index
+import { styles } from './index';
 
 export default function RegisterScreen() {
     const [name, setName] = useState('');
@@ -19,7 +19,7 @@ export default function RegisterScreen() {
             const userData = { name, email, password };
             await AsyncStorage.setItem('USER_ACCOUNT', JSON.stringify(userData));
             Alert.alert('Thành công', 'Đăng ký xong! Vui lòng đăng nhập.');
-            router.back(); // Quay lại trang Login
+            router.back();
         } catch (e) {
             Alert.alert('Lỗi', 'Không thể lưu dữ liệu');
         }
