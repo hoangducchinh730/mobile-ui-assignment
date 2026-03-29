@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
-import React from 'react';
-import { FlatList, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { FlatList, SafeAreaView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
+import * as SQLite from 'expo-sqlite';
 
 const HARDCODED_POSTS = [
     {
@@ -36,28 +37,92 @@ const HARDCODED_POSTS = [
 ];
 
 export default function HomeScreen() {
+    const [posts, setPosts] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        let isMounted = true;
+
+        async function initDB() {
+            try {
+                // 1. Mở kết nối Database
+                const db = await SQLite.openDatabaseAsync('posts-data.db');
+                
+                // 2. Tạo bảng nếu chưa có
+                const query = `CREATE TABLE IF NOT EXISTS posts (
+                    id TEXT PRIMARY KEY NOT NULL,
+                    title TEXT NOT NULL,
+                    date TEXT NOT NULL,
+                    content TEXT NOT NULL
+                );`;
+                
+                await db.execAsync(query);
+
+                // 3. Select để kiểm tra dữ liệu
+                let results = await db.getAllAsync<any>('SELECT * FROM posts');
+                
+                // Nếu rỗng, Insert dữ liệu mồi y hệt code thầy cho (bằng lệnh INSERT)
+                if (results.length === 0) {
+                    console.log('Chưa có data, đang tiến hành Insert dữ liệu mẫu...');
+                    for (const post of HARDCODED_POSTS) {
+                        await db.runAsync(
+                            'INSERT INTO posts (id, title, date, content) VALUES (?, ?, ?, ?)',
+                            [post.id, post.title, post.date, post.content]
+                        );
+                    }
+                    // Lấy ra lại sau khi thêm
+                    results = await db.getAllAsync<any>('SELECT * FROM posts');
+                }
+
+                if (isMounted) {
+                    setPosts(results);
+                }
+            } catch (error) {
+                console.error("Lỗi thao tác SQLite: ", error);
+            } finally {
+                if (isMounted) setLoading(false);
+            }
+        }
+
+        initDB();
+
+        return () => { isMounted = false; }
+    }, []);
+
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
             <View style={styles.header}>
                 <Text style={styles.greeting}>Travery Feed</Text>
-                <TouchableOpacity onPress={() => router.push('/profile')} style={styles.profileBtn}>
-                    <Text style={styles.profileBtnText}>Profile</Text>
-                </TouchableOpacity>
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                    <TouchableOpacity onPress={() => router.push('/settings')} style={[styles.profileBtn, { backgroundColor: '#f0f0f0' }]}>
+                        <Text style={[styles.profileBtnText, { color: '#000' }]}>Cài đặt</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => router.push('/profile')} style={styles.profileBtn}>
+                        <Text style={styles.profileBtnText}>Profile</Text>
+                    </TouchableOpacity>
+                </View>
             </View>
 
-            <FlatList
-                data={HARDCODED_POSTS}
-                keyExtractor={item => item.id}
-                contentContainerStyle={{ padding: 20 }}
-                showsVerticalScrollIndicator={false}
-                renderItem={({ item }) => (
-                    <View style={styles.postCard}>
-                        <Text style={styles.postTitle}>{item.title}</Text>
-                        <Text style={{ color: '#888', marginBottom: 10, fontSize: 12 }}>{item.date}</Text>
-                        <Text style={{ color: '#333', lineHeight: 22 }}>{item.content}</Text>
-                    </View>
-                )}
-            />
+            {loading ? (
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                    <ActivityIndicator size="large" color="#000" />
+                    <Text style={{ marginTop: 10 }}>Đang tải dữ liệu từ cục bộ...</Text>
+                </View>
+            ) : (
+                <FlatList
+                    data={posts}
+                    keyExtractor={item => item.id.toString()}
+                    contentContainerStyle={{ padding: 20 }}
+                    showsVerticalScrollIndicator={false}
+                    renderItem={({ item }) => (
+                        <View style={styles.postCard}>
+                            <Text style={styles.postTitle}>{item.title}</Text>
+                            <Text style={{ color: '#888', marginBottom: 10, fontSize: 12 }}>{item.date}</Text>
+                            <Text style={{ color: '#333', lineHeight: 22 }}>{item.content}</Text>
+                        </View>
+                    )}
+                />
+            )}
         </SafeAreaView>
     );
 }

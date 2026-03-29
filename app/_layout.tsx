@@ -33,6 +33,15 @@ export default function RootLayout() {
           headerBackTitle: 'Back' // Chữ hiện cạnh nút back (cho iOS)
         }}
       />
+
+      {/* Cấu hình cho màn hình Settings (settings.tsx) */}
+      <Stack.Screen
+        name="settings"
+        options={{
+          title: 'Cài đặt',
+          headerBackTitle: 'Back'
+        }}
+      />
     </Stack>
   );
 }
