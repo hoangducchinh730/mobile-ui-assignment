@@ -1,70 +1,150 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, SafeAreaView, StyleSheet, Text, TouchableOpacity, View, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import { COLORS, SIZES } from '../src/constants/theme';
+import AppInput from '../src/components/AppInput';
+import AppButton from '../src/components/AppButton';
+import { loginApi } from '../src/api/auth';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('Lỗi', 'Vui lòng nhập đầy đủ thông tin!');
+      return;
+    }
+
     try {
-      const savedUserString = await AsyncStorage.getItem('USER_ACCOUNT');
-      if (savedUserString) {
-        const savedUser = JSON.parse(savedUserString);
-        if (email === savedUser.email && password === savedUser.password) {
-          router.replace('/home');
-        } else {
-          Alert.alert('Lỗi', 'Email hoặc mật khẩu không đúng!');
-        }
+      setIsLoading(true);
+      console.log('Đang gọi API Login...');
+      const data = await loginApi(email, password);
+      console.log('Login thành công:', data);
+      
+      // Thành công, lấy email và name lưu vào AsyncStorage định danh
+      await AsyncStorage.setItem('USER_ACCOUNT', JSON.stringify({
+        email: email,
+        name: data.name
+      }));
+      
+      router.replace('/home');
+    } catch (e: any) {
+      console.log('Lỗi Login:', e);
+      if (Platform.OS === 'web') {
+        window.alert('Lỗi đăng nhập: ' + (e.message || 'Vui lòng kiểm tra lại cấu hình mạng/CORS'));
       } else {
-        Alert.alert('Lỗi', 'Chưa có tài khoản, vui lòng đăng ký!');
+        Alert.alert('Lỗi đăng nhập', e.message || 'Lỗi không xác định');
       }
-    } catch (e) {
-      Alert.alert('Lỗi', 'Có lỗi xảy ra khi đọc dữ liệu.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.formContainer}>
-        <Text style={styles.headerText}>Login</Text>
-
-        <Text style={styles.label}>Email/Username</Text>
-        <TextInput style={styles.input} placeholder="test@mail.com" value={email} onChangeText={setEmail} autoCapitalize="none" />
-
-        <Text style={styles.label}>Password</Text>
-        <TextInput style={styles.input} placeholder="° ° ° °" secureTextEntry value={password} onChangeText={setPassword} />
-
-        <TouchableOpacity style={styles.forgotWrapper}>
-          <Text style={styles.forgotText}>Forgot password?</Text>
-        </TouchableOpacity>
-
-        <View style={styles.buttonWrapper}>
-          <TouchableOpacity style={styles.actionButton} onPress={handleLogin}>
-            <Text style={styles.actionButtonText}>Sign in</Text>
-          </TouchableOpacity>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.container}
+      >
+        <View style={styles.header}>
+          <Text style={styles.title}>Welcome Back</Text>
+          <Text style={styles.subtitle}>Đăng nhập để kết nối với mọi người</Text>
         </View>
 
-        {/* Nút chuyển sang trang đăng ký */}
-        <TouchableOpacity style={{ marginTop: 20, alignItems: 'center' }} onPress={() => router.push('/register')}>
-          <Text style={{ color: '#007BFF' }}>Đăng ký tài khoản mới</Text>
-        </TouchableOpacity>
-      </View>
+        <View style={styles.form}>
+          <AppInput 
+            label="Địa chỉ Email"
+            placeholder="name@example.com"
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            keyboardType="email-address"
+          />
+
+          <AppInput 
+            label="Mật khẩu"
+            placeholder="••••••••"
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+          />
+
+          <TouchableOpacity style={styles.forgotPass}>
+            <Text style={styles.forgotText}>Quên mật khẩu?</Text>
+          </TouchableOpacity>
+
+          {isLoading ? (
+            <ActivityIndicator size="large" color={COLORS.primary} style={{ marginVertical: 20 }} />
+          ) : (
+            <AppButton title="Đăng nhập" onPress={handleLogin} />
+          )}
+
+          <View style={styles.footer}>
+             <Text style={styles.footerText}>Chưa có tài khoản? </Text>
+             <TouchableOpacity onPress={() => router.push('/register')}>
+               <Text style={styles.registerText}>Đăng ký ngay</Text>
+             </TouchableOpacity>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
-
-export const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#f9f9f9', justifyContent: 'center', alignItems: 'center' },
-  formContainer: { width: '90%', maxWidth: 350, borderWidth: 1.5, borderColor: '#333', padding: 25, backgroundColor: '#fff' },
-  headerText: { fontSize: 28, fontWeight: 'bold', textAlign: 'center', marginBottom: 30, color: '#000' },
-  label: { fontSize: 14, fontWeight: 'bold', marginBottom: 5, color: '#000' },
-  input: { borderWidth: 1, borderColor: '#000', paddingHorizontal: 12, paddingVertical: 8, fontSize: 15, marginBottom: 15, color: '#000' },
-  forgotWrapper: { alignItems: 'flex-start', marginTop: -5, marginBottom: 20 },
-  forgotText: { fontSize: 12, color: '#555' },
-  buttonWrapper: { alignItems: 'center', marginTop: 10 },
-  actionButton: { borderWidth: 1.5, borderColor: '#0056b3', paddingVertical: 10, paddingHorizontal: 35, backgroundColor: '#007BFF' },
-  actionButtonText: { fontSize: 16, fontWeight: 'bold', color: '#fff' }
+const styles = StyleSheet.create({
+  safeArea: { 
+    flex: 1, 
+    backgroundColor: COLORS.background 
+  },
+  container: {
+    flex: 1,
+    padding: SIZES.padding,
+    justifyContent: 'center',
+  },
+  header: {
+    marginBottom: 40,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: COLORS.black,
+    marginBottom: 10,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: COLORS.gray,
+  },
+  form: {
+    backgroundColor: COLORS.white,
+    padding: SIZES.padding,
+    borderRadius: SIZES.radiusLarge,
+    elevation: 2,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+  },
+  forgotPass: {
+    alignSelf: 'flex-end',
+    marginBottom: 20,
+  },
+  forgotText: {
+    color: COLORS.primary,
+    fontWeight: '600',
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 20,
+  },
+  footerText: {
+    color: COLORS.gray,
+  },
+  registerText: {
+    color: COLORS.primary,
+    fontWeight: '700',
+  }
 });

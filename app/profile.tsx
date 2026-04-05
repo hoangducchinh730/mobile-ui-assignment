@@ -1,148 +1,99 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import {
-    Alert,
-    Image,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
-} from 'react-native';
+import { Alert, SafeAreaView, ScrollView, StyleSheet, Text, View, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { COLORS, SIZES, SHADOWS } from '../src/constants/theme';
+import { getProfileApi } from '../src/api/auth';
+import { Ionicons } from '@expo/vector-icons';
+import AppButton from '../src/components/AppButton';
 
 export default function ProfileScreen() {
-    const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
-    const [address, setAddress] = useState('');
-    const [avatarUrl, setAvatarUrl] = useState('');
-    const [description, setDescription] = useState('');
+    const [profile, setProfile] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const loadUserData = async () => {
+        const fetchProfile = async () => {
             try {
-                const savedUserString = await AsyncStorage.getItem('USER_ACCOUNT');
-                if (savedUserString) {
-                    const userData = JSON.parse(savedUserString);
-                    setName(userData.name || '');
-                    setEmail(userData.email || '');
-                    setAddress(userData.address || '');
-                    setAvatarUrl(userData.avatarUrl || '');
-                    setDescription(userData.description || '');
+                const userStr = await AsyncStorage.getItem('USER_ACCOUNT');
+                if (userStr) {
+                    const { email } = JSON.parse(userStr);
+                    // Lấy profile từ Server bằng API GET
+                    const data = await getProfileApi(email);
+                    setProfile(data);
                 }
-            } catch (error) {
-                console.error("Lỗi khi load dữ liệu", error);
+            } catch (error: any) {
+                Alert.alert('Lỗi', 'Không thể đồng bộ hồ sơ: ' + error.message);
+            } finally {
+                setLoading(false);
             }
         };
 
-        loadUserData();
+        fetchProfile();
     }, []);
 
-
-    const handleSave = async () => {
-        try {
-            const savedUserString = await AsyncStorage.getItem('USER_ACCOUNT');
-            let userData = savedUserString ? JSON.parse(savedUserString) : {};
-
-
-            userData = {
-                ...userData,
-                name,
-                address,
-                avatarUrl,
-                description
-            };
-
-            await AsyncStorage.setItem('USER_ACCOUNT', JSON.stringify(userData));
-            Alert.alert('Thành công', 'Thông tin của bạn đã được cập nhật!');
-        } catch (error) {
-            Alert.alert('Lỗi', 'Không thể lưu thông tin. Vui lòng thử lại.');
-        }
-    };
-
-
     const handleLogout = () => {
-        Alert.alert("Đăng xuất", "Bạn có chắc chắn muốn đăng xuất?", [
+        Alert.alert("Đăng xuất", "Bạn có chắc chắn muốn thoát khỏi hệ thống?", [
             { text: "Hủy", style: "cancel" },
             {
-                text: "Đồng ý",
-                onPress: () => router.replace('/')
+                text: "Đồng ý", style: 'destructive',
+                onPress: async () => {
+                    await AsyncStorage.removeItem('USER_ACCOUNT');
+                    router.replace('/');
+                }
             }
         ]);
     };
 
+    if (loading) {
+        return (
+            <SafeAreaView style={[styles.safeArea, { justifyContent: 'center', alignItems: 'center' }]}>
+                <ActivityIndicator size="large" color={COLORS.primary} />
+            </SafeAreaView>
+        )
+    }
+
     return (
         <SafeAreaView style={styles.safeArea}>
-            {/* Dùng ScrollView để khi bàn phím bật lên không bị che mất nút Save */}
+            <View style={styles.headerBar}>
+                 <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
+                     <Ionicons name="arrow-back" size={24} color={COLORS.black} />
+                 </TouchableOpacity>
+                 <Text style={styles.headerTitle}>Hồ Sơ Của Bạn</Text>
+                 <View style={{ width: 44 }} />
+            </View>
+
             <ScrollView contentContainerStyle={styles.container}>
+                {profile ? (
+                    <View style={[styles.card, SHADOWS.soft]}>
+                        <View style={styles.avatarContainer}>
+                            <View style={styles.avatarCircle}>
+                                <Ionicons name="person" size={50} color={COLORS.primary} />
+                            </View>
+                            <Text style={styles.name}>{profile.name}</Text>
+                            <Text style={styles.email}>{profile.email}</Text>
+                        </View>
+                        
+                        <View style={styles.infoSection}>
+                            <Text style={styles.label}>Giới thiệu bản thân</Text>
+                            <Text style={styles.description}>{profile.description || 'Chưa cung cấp mô tả nào.'}</Text>
+                        </View>
 
-                {/* Phần Header: Tên và Avatar */}
-                <View style={styles.headerRow}>
-                    <Text style={styles.greetingText}>{name}!</Text>
-                    <View style={styles.avatarContainer}>
-                        {avatarUrl ? (
-                            <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
-                        ) : (
-                            <Text style={styles.avatarPlaceholder}>🖼️</Text>
-                        )}
+                        <View style={styles.infoSection}>
+                            <Text style={styles.label}>Tài khoản tạo lúc</Text>
+                            <Text style={styles.description}>{profile.created_at ? new Date(profile.created_at).toLocaleString() : 'Không rõ'}</Text>
+                        </View>
+                        
+                        <View style={styles.noteBox}>
+                            <Ionicons name="information-circle" size={20} color={COLORS.gray} style={{ marginRight: 6 }}/>
+                            <Text style={styles.readOnlyNote}>Theo cấu trúc Server API, thông tin của bạn hiện không thể chỉnh sửa, chỉ có dạng "Read-Only".</Text>
+                        </View>
+
                     </View>
-                </View>
-
-                {/* Các Form Nhập Liệu */}
-                <Text style={styles.label}>Name</Text>
-                <TextInput
-                    style={styles.input}
-                    value={name}
-                    onChangeText={setName}
-                />
-
-                <Text style={styles.label}>Email</Text>
-                <TextInput
-                    style={[styles.input, styles.inputDisabled]}
-                    value={email}
-                    editable={false}
-                />
-
-                <Text style={styles.label}>Address</Text>
-                <TextInput
-                    style={styles.input}
-                    placeholder="Your Address"
-                    value={address}
-                    onChangeText={setAddress}
-                />
-
-                <Text style={styles.label}>Avatar URL</Text>
-                <TextInput
-                    style={styles.input}
-                    placeholder="https://example.com/photo.jpg"
-                    value={avatarUrl}
-                    onChangeText={setAvatarUrl}
-                    autoCapitalize="none"
-                />
-
-                <Text style={styles.label}>Description</Text>
-                <TextInput
-                    style={[styles.input, styles.textArea]}
-                    placeholder="Tell us about yourself..."
-                    value={description}
-                    onChangeText={setDescription}
-                    multiline={true}
-                    numberOfLines={4}
-                />
-
-                {/* Nút Save */}
-                <View style={styles.buttonWrapper}>
-                    <TouchableOpacity style={styles.btnSave} onPress={handleSave}>
-                        <Text style={styles.btnSaveText}>Save</Text>
-                    </TouchableOpacity>
-                </View>
-
-                {/* Nút Đăng xuất (Tính năng thêm) */}
-                <TouchableOpacity style={styles.btnLogout} onPress={handleLogout}>
-                    <Text style={styles.btnLogoutText}>Đăng xuất khỏi hệ thống</Text>
-                </TouchableOpacity>
+                ) : (
+                    <Text style={{ textAlign: 'center', marginTop: 20 }}>Không tìm thấy hồ sơ.</Text>
+                )}
+                
+                <AppButton title="Đăng Xuất Tài Khoản" onPress={handleLogout} variant="outline" style={{ marginTop: 24, borderColor: COLORS.danger }} textStyle={{ color: COLORS.danger }} />
 
             </ScrollView>
         </SafeAreaView>
@@ -150,88 +101,40 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-    safeArea: {
-        flex: 1,
-        backgroundColor: '#fff'
-    },
-    container: {
-        padding: 20,
-        paddingBottom: 40
-    },
-    headerRow: {
+    safeArea: { flex: 1, backgroundColor: COLORS.background },
+    headerBar: {
         flexDirection: 'row',
+        alignItems: 'center',
         justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 30
+        padding: SIZES.padding,
     },
-    greetingText: {
-        fontSize: 32,
-        fontWeight: 'bold',
-        color: '#000'
+    iconBtn: { padding: 8, backgroundColor: COLORS.white, borderRadius: SIZES.radiusPill, ...SHADOWS.soft },
+    headerTitle: { fontSize: 20, fontWeight: 'bold', color: COLORS.black },
+    container: { padding: SIZES.padding },
+    card: {
+        backgroundColor: COLORS.white,
+        borderRadius: SIZES.radiusLarge,
+        padding: 24,
     },
-    avatarContainer: {
-        width: 60,
-        height: 60,
-        borderWidth: 1,
-        borderColor: '#333',
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#fff'
+    avatarContainer: { alignItems: 'center', marginBottom: 30 },
+    avatarCircle: {
+        width: 100, height: 100,
+        backgroundColor: COLORS.lightGray,
+        borderRadius: 50,
+        justifyContent: 'center', alignItems: 'center',
+        marginBottom: 16
     },
-    avatarImage: {
-        width: '100%',
-        height: '100%',
-        resizeMode: 'cover'
+    name: { fontSize: 24, fontWeight: '900', color: COLORS.black, marginBottom: 4 },
+    email: { fontSize: 15, color: COLORS.primary, fontWeight: '600' },
+    infoSection: { marginBottom: 20 },
+    label: { fontSize: 13, color: COLORS.gray, textTransform: 'uppercase', fontWeight: 'bold', marginBottom: 8 },
+    description: { fontSize: 16, color: COLORS.black, lineHeight: 24 },
+    noteBox: {
+        flexDirection: 'row',
+        backgroundColor: COLORS.background,
+        padding: 16,
+        borderRadius: SIZES.radius,
+        marginTop: 10,
     },
-    avatarPlaceholder: {
-        fontSize: 24
-    },
-    label: {
-        fontSize: 14,
-        color: '#333',
-        marginBottom: 5
-    },
-    input: {
-        borderWidth: 1,
-        borderColor: '#333',
-        paddingHorizontal: 12,
-        paddingVertical: 10,
-        fontSize: 15,
-        marginBottom: 15,
-        color: '#000',
-        backgroundColor: '#fff'
-    },
-    inputDisabled: {
-        backgroundColor: '#f0f0f0',
-        color: '#666'
-    },
-    textArea: {
-        height: 100,
-        textAlignVertical: 'top'
-    },
-    buttonWrapper: {
-        alignItems: 'flex-start',
-        marginTop: 10
-    },
-    btnSave: {
-        borderWidth: 1.5,
-        borderColor: '#000',
-        paddingVertical: 10,
-        paddingHorizontal: 40,
-        backgroundColor: '#fff'
-    },
-    btnSaveText: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: '#000'
-    },
-    btnLogout: {
-        marginTop: 40,
-        alignItems: 'center'
-    },
-    btnLogoutText: {
-        color: 'red',
-        fontSize: 14,
-        textDecorationLine: 'underline'
-    }
+    readOnlyNote: { flex: 1, fontSize: 13, color: COLORS.gray, lineHeight: 20 }
 });
